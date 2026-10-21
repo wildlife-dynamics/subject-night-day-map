@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>subject-day-night-map</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="bar">
+      <a class="brand" href="index.html">subject-day-night-map</a>
+      <nav>
+        <a href="index.html" class="active">Overview</a>
+        <a href="user-guide.html">User Guide</a>
+        <a href="technical-guide.html">Technical Guide</a>
+        <a href="troubleshooting.html">Troubleshooting</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>subject-day-night-map</h1>
+    <p class="lede">subject-day-night-map</p>
+
+    <div class="card-grid">
+      <a class="card" href="user-guide.html">
+        <h3>User Guide</h3>
+        <p>Loading the workflow, connecting its data sources and filling in its settings.</p>
+      </a>
+      <a class="card" href="technical-guide.html">
+        <h3>Technical Guide</h3>
+        <p>Each step of the workflow, the task packages it uses, and how to recompile and test it.</p>
+      </a>
+      <a class="card" href="troubleshooting.html">
+        <h3>Troubleshooting</h3>
+        <p>Common errors while configuring or running the workflow, and how to resolve them.</p>
+      </a>
+    </div>
+
+    <h2>What it does</h2>
+    <table>
+      <thead><tr><th>Step</th><th>What it does</th></tr></thead>
+      <tbody><tr><td><strong>Set Time Range</strong></td><td>Choose the period of time to analyze.</td></tr><tr><td><strong>Connect to EarthRanger</strong></td><td></td></tr><tr><td><strong>Subject Group Name</strong></td><td>Get observations for a subject group from EarthRanger.</td></tr><tr><td><strong>Process Relocations</strong></td><td></td></tr><tr><td><strong>Classify Is Night</strong></td><td>Classifies if segments occur at night in a trajectory dataframe</td></tr><tr><td><strong>Persist Relocations</strong></td><td>Persist dataframe to a file or cloud storage object.</td></tr><tr><td><strong>Relocations To Trajectory</strong></td><td></td></tr><tr><td><strong>Persist Trajectories</strong></td><td>Persist dataframe to a file or cloud storage object.</td></tr><tr><td><strong>Map Columns</strong></td><td>Maps and transforms the columns of a DataFrame based on the provided parameters. The order of the operations is as follows: drop columns, retain/reorder columns, and rename columns.</td></tr><tr><td><strong>Sort Values</strong></td><td></td></tr><tr><td><strong>Apply Color Map</strong></td><td>Adds a color column to the dataframe based on the categorical values in the specified column.</td></tr><tr><td><strong>Set Groupers</strong></td><td></td></tr><tr><td><strong>Split Groups</strong></td><td></td></tr><tr><td><strong>Create Path Layer</strong></td><td>Creates a polyline layer definition based on the provided configuration.</td></tr><tr><td><strong>Compute Fitted View State</strong></td><td>Compute a `ViewState` fitted to `geo_layers`, corrected for rendering inside a smaller-than-full-window map widget (see `_ASSUMED_VIEWPORT_WIDTH_PX`).</td></tr><tr><td><strong>Set Base Maps</strong></td><td></td></tr><tr><td><strong>Draw Map</strong></td><td>Creates a map based on the provided layer definitions and configuration.</td></tr><tr><td><strong>Persist Day Night Map</strong></td><td>Persist text to a file or cloud storage object.</td></tr><tr><td><strong>Create Map Widget Single View</strong></td><td>Create a map widget with a single view.</td></tr><tr><td><strong>Set Workflow Details</strong></td><td>Add information that will help to differentiate this workflow from another.</td></tr><tr><td><strong>Merge Widget Views</strong></td><td>Merge widgets with the same `title` and `widget_type`.</td></tr><tr><td><strong>Gather Dashboard</strong></td><td></td></tr></tbody>
+    </table>
+
+    <h2>Requirements</h2>
+    <ul><li>Access to a <strong>EarthRanger</strong> data source, set up as a connection</li></ul>
+
+    <h2>Get started</h2>
+    <p>New to the workflow? Start with the <a href="user-guide.html">User Guide</a>. Running into an error? Check <a href="troubleshooting.html">Troubleshooting</a> first.</p>
+  </main>
+
+  <footer class="site-footer">
+    <p>subject-day-night-map &middot; Wildlife Dynamics</p>
+  </footer>
+</body>
+</html>

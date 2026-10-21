@@ -1,0 +1,14 @@
+designer-run:
+  name: subject-day-night-map
+  description: The values used with ▶ Run in the designer.
+  params:
+    time_range:
+      since: '2026-04-01T09:45:08'
+      until: '2026-10-20T09:45:12'
+    er_connection:
+      data_source:
+        name: Save the Elephants
+    subjectgroup_observations:
+      subject_group_name: ecoscope
+    workflow_details:
+      name: sample

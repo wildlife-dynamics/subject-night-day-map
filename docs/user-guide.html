@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Guide · subject-day-night-map</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="bar">
+      <a class="brand" href="index.html">subject-day-night-map</a>
+      <nav>
+        <a href="index.html">Overview</a>
+        <a href="user-guide.html" class="active">User Guide</a>
+        <a href="technical-guide.html">Technical Guide</a>
+        <a href="troubleshooting.html">Troubleshooting</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>User Guide</h1>
+    <p class="lede">How to load subject-day-night-map, connect its data sources and fill in its settings.</p>
+
+    <h2>1. Load the workflow</h2>
+    <p>In the workflow runner, add a new template using this repository's URL, then select <strong>subject-day-night-map</strong> from the templates list.</p>
+
+    <h2>2. Data sources</h2>
+    <ul><li>Access to a <strong>EarthRanger</strong> data source, set up as a connection</li></ul>
+
+    <h2>3. Settings</h2>
+    <p>The run form asks for these. Fields with a default can be left as they are.</p>
+    <h3>Set Time Range</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
+      <tbody><tr><td>Since <em>(required)</em></td><td>The start time</td><td>—</td></tr><tr><td>Until <em>(required)</em></td><td>The end time</td><td>—</td></tr><tr><td>Timezone</td><td></td><td>—</td></tr></tbody>
+    </table>
+    <h3>Connect to EarthRanger</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
+      <tbody><tr><td>Data source <em>(required)</em></td><td>Select one of your configured data sources.</td><td>—</td></tr></tbody>
+    </table>
+    <h3>Subject Group Name</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
+      <tbody><tr><td>Subject Group Name <em>(required)</em></td><td>⚠️ The use of a group with mixed subtypes could lead to unexpected results</td><td>—</td></tr></tbody>
+    </table>
+    <h3>Set Base Maps</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
+      <tbody><tr><td> </td><td>Select tile layers to use as base layers in map outputs. The first layer in the list will be the bottommost layer displayed.</td><td><code>[{&quot;url&quot;: &quot;https://server.arcgisonline.com/ArcGIS/rest/ser…</code></td></tr></tbody>
+    </table>
+    <h3>Set Workflow Details</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
+      <tbody><tr><td>Workflow Name <em>(required)</em></td><td></td><td>—</td></tr></tbody>
+    </table>
+
+    <h2>4. Run it and find the results</h2>
+    <p>The workflow writes its files to the results folder the runner gives it (<code>ECOSCOPE_WORKFLOWS_RESULTS</code>), and shows its dashboard when it finishes.</p>
+  </main>
+
+  <footer class="site-footer">
+    <p>subject-day-night-map &middot; Wildlife Dynamics</p>
+  </footer>
+</body>
+</html>
