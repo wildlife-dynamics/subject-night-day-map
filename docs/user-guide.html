@@ -21,44 +21,59 @@
 
   <main>
     <h1>User Guide</h1>
-    <p class="lede">How to load subject-day-night-map, connect its data sources and fill in its settings.</p>
+    <p class="lede">How to load subject-day-night-map, connect its data source and fill in its settings.</p>
 
     <h2>1. Load the workflow</h2>
     <p>In the workflow runner, add a new template using this repository's URL, then select <strong>subject-day-night-map</strong> from the templates list.</p>
 
     <h2>2. Data sources</h2>
-    <ul><li>Access to a <strong>EarthRanger</strong> data source, set up as a connection</li></ul>
+    <ul><li>Access to an <strong>EarthRanger</strong> data source, set up as a connection</li></ul>
 
     <h2>3. Settings</h2>
-    <p>The run form asks for these. Fields with a default can be left as they are.</p>
-    <h3>Set Time Range</h3>
+    <p>The run form asks for these. Fields with a default can be left as they are; fields marked <em>Advanced</em> are collapsed.</p>
+    <h3 id="set-workflow-details">Set Workflow Details</h3>
     <table>
       <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
-      <tbody><tr><td>Since <em>(required)</em></td><td>The start time</td><td>—</td></tr><tr><td>Until <em>(required)</em></td><td>The end time</td><td>—</td></tr><tr><td>Timezone</td><td></td><td>—</td></tr></tbody>
+      <tbody><tr><td>Workflow Name <em>(required)</em></td><td>A name for this run.</td><td>—</td></tr><tr><td>Workflow Description</td><td>Optional notes about this run.</td><td>—</td></tr></tbody>
     </table>
-    <h3>Connect to EarthRanger</h3>
+    <h3 id="set-time-range">Set Time Range</h3>
     <table>
       <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
-      <tbody><tr><td>Data source <em>(required)</em></td><td>Select one of your configured data sources.</td><td>—</td></tr></tbody>
+      <tbody><tr><td>Since <em>(required)</em></td><td>The start of the period to map.</td><td>—</td></tr><tr><td>Until <em>(required)</em></td><td>The end of the period to map.</td><td>—</td></tr><tr><td>Timezone</td><td>Timezone the times are given in.</td><td>—</td></tr></tbody>
     </table>
-    <h3>Subject Group Name</h3>
+    <h3 id="connect-to-earthranger">Connect to EarthRanger</h3>
     <table>
       <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
-      <tbody><tr><td>Subject Group Name <em>(required)</em></td><td>⚠️ The use of a group with mixed subtypes could lead to unexpected results</td><td>—</td></tr></tbody>
+      <tbody><tr><td>Data source <em>(required)</em></td><td>Select one of your configured EarthRanger data sources. Choose it first: the Subject Group drop-down lists this data source's groups.</td><td>—</td></tr></tbody>
     </table>
-    <h3>Set Base Maps</h3>
+    <h3 id="set-groupers">Set Groupers</h3>
     <table>
       <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
-      <tbody><tr><td> </td><td>Select tile layers to use as base layers in map outputs. The first layer in the list will be the bottommost layer displayed.</td><td><code>[{&quot;url&quot;: &quot;https://server.arcgisonline.com/ArcGIS/rest/ser…</code></td></tr></tbody>
+      <tbody><tr><td>Group by</td><td>Optional. Add a grouper to get one map per group: <strong>Category</strong> (only <em>Subject Name</em>, one map per subject), <strong>Temporal</strong> (e.g. one map per month) or <strong>Spatial</strong> (one map per spatial region). Leave empty for a single map of all subjects.</td><td>—</td></tr></tbody>
     </table>
-    <h3>Set Workflow Details</h3>
+    <h3 id="basemap-urls">Basemap URLs</h3>
     <table>
       <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
-      <tbody><tr><td>Workflow Name <em>(required)</em></td><td></td><td>—</td></tr></tbody>
+      <tbody><tr><td>Base maps</td><td>Tile layers to draw under the tracks. The first layer in the list is the bottommost. Advanced.</td><td>Esri World Topo Map, with Esri World Imagery at 50% opacity</td></tr></tbody>
+    </table>
+    <h3 id="subject-group">Subject Group</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
+      <tbody><tr><td>Subject Group Name <em>(required)</em></td><td>The EarthRanger subject group to map, picked from a drop-down of the chosen data source's subject groups. ⚠️ A group with mixed subtypes could give unexpected results.</td><td>—</td></tr></tbody>
+    </table>
+    <h3 id="relocations-to-trajectory">Relocations To Trajectory</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
+      <tbody><tr><td>Trajectory Segment Filter</td><td>Limits on segment length, duration and speed; segments outside them are dropped. Advanced.</td><td>length 0.001 m – 100 km, time 1 s – 48 h, speed 0.01 – 500 km/h</td></tr></tbody>
     </table>
 
     <h2>4. Run it and find the results</h2>
     <p>The workflow writes its files to the results folder the runner gives it (<code>ECOSCOPE_WORKFLOWS_RESULTS</code>), and shows its dashboard when it finishes.</p>
+    <table>
+      <thead><tr><th>Output</th><th>Description</th></tr></thead>
+      <tbody><tr><td><code>relocations.geoparquet</code></td><td>The cleaned location fixes, each with an <code>is_night</code> flag.</td></tr><tr><td><code>trajectories.geoparquet</code></td><td>The track segments built from those fixes.</td></tr><tr><td>One HTML map per group</td><td>The day/night track map, as shown on the dashboard.</td></tr><tr><td>Dashboard</td><td>A <strong>Day Night Tracks</strong> map widget; with groupers set, the dashboard filter switches between groups.</td></tr></tbody>
+    </table>
+    <p>On the map, day segments are amber (<code>#e7a553</code>) and night segments navy (<code>#292965</code>); night is when the sun is below the horizon at the fix's location and time.</p>
   </main>
 
   <footer class="site-footer">

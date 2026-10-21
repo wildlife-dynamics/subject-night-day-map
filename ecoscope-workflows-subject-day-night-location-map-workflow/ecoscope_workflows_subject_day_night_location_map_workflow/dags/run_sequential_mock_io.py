@@ -10,8 +10,11 @@ import os
 import warnings  # 🧪
 from typing import Any
 
+from ecoscope.platform.tasks.config import set_workflow_details as set_workflow_details
 from ecoscope.platform.tasks.filter import set_time_range as set_time_range
+from ecoscope.platform.tasks.groupby import set_groupers as set_groupers
 from ecoscope.platform.tasks.io import set_er_connection as set_er_connection
+from ecoscope.platform.tasks.results import set_base_maps as set_base_maps
 from ecoscope.platform.tasks.skip import (
     any_dependency_skipped as any_dependency_skipped,
 )
@@ -26,9 +29,7 @@ get_subjectgroup_observations = create_func_magicmock(  # 🧪
     anchor="ecoscope.platform.tasks.io",  # 🧪
     func_name="get_subjectgroup_observations",  # 🧪
 )  # 🧪
-from ecoscope.platform.tasks.config import set_workflow_details as set_workflow_details
 from ecoscope.platform.tasks.groupby import groupbykey as groupbykey
-from ecoscope.platform.tasks.groupby import set_groupers as set_groupers
 from ecoscope.platform.tasks.groupby import split_groups as split_groups
 from ecoscope.platform.tasks.io import persist_df as persist_df
 from ecoscope.platform.tasks.io import persist_text as persist_text
@@ -45,7 +46,6 @@ from ecoscope.platform.tasks.results import create_path_layer as create_path_lay
 from ecoscope.platform.tasks.results import draw_map as draw_map
 from ecoscope.platform.tasks.results import gather_dashboard as gather_dashboard
 from ecoscope.platform.tasks.results import merge_widget_views as merge_widget_views
-from ecoscope.platform.tasks.results import set_base_maps as set_base_maps
 from ecoscope.platform.tasks.transformation import apply_color_map as apply_color_map
 from ecoscope.platform.tasks.transformation import (
     classify_is_night as classify_is_night,
@@ -63,6 +63,23 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     if validate_params_schema:
         _validate(params, _metadata.load_params_schema())
 
+    workflow_details = (
+        task(set_workflow_details)
+        .validate()
+        .set_task_instance_id("workflow_details")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("workflow_details") or {}))
+        .call()
+    )
+
     time_range = (
         task(set_time_range)
         .validate()
@@ -76,7 +93,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(time_format="%d %b %Y %H:%M:%S", **(params.get("time_range") or {}))
+        .partial(**(params.get("time_range") or {}))
         .call()
     )
 
@@ -94,6 +111,40 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(**(params.get("er_connection") or {}))
+        .call()
+    )
+
+    groupers = (
+        task(set_groupers)
+        .validate()
+        .set_task_instance_id("groupers")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("groupers") or {}))
+        .call()
+    )
+
+    base_maps = (
+        task(set_base_maps)
+        .validate()
+        .set_task_instance_id("base_maps")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("base_maps") or {}))
         .call()
     )
 
@@ -212,18 +263,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(
-            relocations=is_night,
-            trajectory_segment_filter={
-                "min_length_meters": 0.001,
-                "max_length_meters": 100000,
-                "min_time_secs": 1,
-                "max_time_secs": 172800,
-                "min_speed_kmhr": 0.01,
-                "max_speed_kmhr": 500,
-            },
-            **(params.get("to_trajectory") or {}),
-        )
+        .partial(relocations=is_night, **(params.get("to_trajectory") or {}))
         .call()
     )
 
@@ -333,25 +373,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    groupers = (
-        task(set_groupers)
-        .validate()
-        .set_task_instance_id("groupers")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            groupers=[{"index_name": "subject_name"}], **(params.get("groupers") or {})
-        )
-        .call()
-    )
-
     groups = (
         task(split_groups)
         .validate()
@@ -432,23 +453,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         )
         .partial(max_zoom=20, **(params.get("fitted_view_state") or {}))
         .mapvalues(argnames=["geo_layers"], argvalues=path_layer)
-    )
-
-    base_maps = (
-        task(set_base_maps)
-        .validate()
-        .set_task_instance_id("base_maps")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(**(params.get("base_maps") or {}))
-        .call()
     )
 
     map_step_by_group = (
@@ -533,23 +537,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             title="Day Night Tracks", **(params.get("map_widget_single_view") or {})
         )
         .map(argnames=["view", "data"], argvalues=day_night_map)
-    )
-
-    workflow_details = (
-        task(set_workflow_details)
-        .validate()
-        .set_task_instance_id("workflow_details")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(description="", **(params.get("workflow_details") or {}))
-        .call()
     )
 
     widget_views = (

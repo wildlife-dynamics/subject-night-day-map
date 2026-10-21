@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>subject-day-night-map</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 860px; margin: 40px auto; padding: 0 24px; color: #1a1a1a; line-height: 1.6; }
+    h1 { font-size: 2em; border-bottom: 2px solid #2d6a4f; padding-bottom: 10px; color: #2d6a4f; }
+    h2 { font-size: 1.4em; color: #2d6a4f; margin-top: 2em; border-bottom: 1px solid #b7e4c7; padding-bottom: 4px; }
+    h3 { font-size: 1.1em; color: #40916c; margin-top: 1.5em; }
+    h4 { font-size: 1em; color: #52b788; }
+    img { max-width: 100%; border: 1px solid #d8e8d8; border-radius: 6px; margin: 16px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    pre { background: #f4f4f4; padding: 12px 16px; border-radius: 6px; font-size: 0.9em; overflow-x: auto; border-left: 4px solid #52b788; }
+    code { background: #f0f7f0; padding: 2px 5px; border-radius: 3px; font-size: 0.9em; }
+    pre code { background: none; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 0.95em; }
+    th { background: #2d6a4f; color: white; padding: 10px 14px; text-align: left; }
+    td { padding: 9px 14px; border-bottom: 1px solid #d8e8d8; }
+    tr:nth-child(even) td { background: #f0f7f0; }
+    hr { border: none; border-top: 1px solid #d8e8d8; margin: 2em 0; }
+    blockquote { border-left: 4px solid #52b788; margin: 1em 0; padding: 8px 16px; background: #f0f7f0; color: #444; border-radius: 0 4px 4px 0; }
+  </style>
+
+</head>
+<body>
+
+<h1 id="subject-day-night-map">subject-day-night-map</h1>
+<p>Maps the movement tracks of every subject in an EarthRanger subject group, colouring each track segment by whether it was travelled by day (amber) or by night (navy). Night is worked out from the sun's position at each location fix, so it follows the real sunset and sunrise at that place and date.</p>
+<p>Full documentation: <a href="docs/index.html">docs/index.html</a> (User Guide, Technical Guide and Troubleshooting).</p>
+<h2 id="what-it-does">What it does</h2>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Set Workflow Details</strong></td>
+<td>Name and description shown on the dashboard.</td>
+</tr>
+<tr>
+<td><strong>Set Time Range</strong></td>
+<td>The period to map.</td>
+</tr>
+<tr>
+<td><strong>Connect to EarthRanger</strong></td>
+<td>The EarthRanger site to read from.</td>
+</tr>
+<tr>
+<td><strong>Set Groupers</strong></td>
+<td>How the maps are split: one map per subject, per time period or per spatial region. Leave empty for one map.</td>
+</tr>
+<tr>
+<td><strong>Basemap URLs</strong></td>
+<td>Tile layers drawn under the tracks.</td>
+</tr>
+<tr>
+<td><strong>Subject Group</strong></td>
+<td>Fetches the location fixes of the subject group picked from the drop-down, for the time range.</td>
+</tr>
+<tr>
+<td><strong>Process Relocations</strong></td>
+<td>Cleans the fixes and drops known bad coordinates (0,0 / 1,1 / 180,90).</td>
+</tr>
+<tr>
+<td><strong>Classify Is Night</strong></td>
+<td>Flags each fix as night when the sun is below the horizon at its location and time.</td>
+</tr>
+<tr>
+<td><strong>Persist Relocations</strong></td>
+<td>Saves the classified fixes as <code>relocations.geoparquet</code>.</td>
+</tr>
+<tr>
+<td><strong>Relocations To Trajectory</strong></td>
+<td>Joins the fixes into track segments, dropping segments outside the Trajectory Segment Filter limits.</td>
+</tr>
+<tr>
+<td><strong>Persist Trajectories</strong></td>
+<td>Saves the track segments as <code>trajectories.geoparquet</code>.</td>
+</tr>
+<tr>
+<td><strong>Map Columns</strong></td>
+<td>Renames the subject and day/night columns (e.g. <code>subject_name</code>, <code>is_night</code>) and drops unused patrol columns.</td>
+</tr>
+<tr>
+<td><strong>Sort Values</strong></td>
+<td>Orders day segments before night ones, so night segments are drawn on top.</td>
+</tr>
+<tr>
+<td><strong>Apply Color Map</strong></td>
+<td>Colours day segments amber (<code>#e7a553</code>) and night segments navy (<code>#292965</code>).</td>
+</tr>
+<tr>
+<td><strong>Split Groups</strong></td>
+<td>One table of segments per group from Set Groupers.</td>
+</tr>
+<tr>
+<td><strong>Create Path Layer</strong></td>
+<td>Draws each group's segments in their day/night colour, with a Day/Night legend and a tooltip.</td>
+</tr>
+<tr>
+<td><strong>Compute Fitted View State</strong></td>
+<td>Zooms each map to its tracks.</td>
+</tr>
+<tr>
+<td><strong>Pair up geo_layers, view_state by group</strong></td>
+<td>Pairs each group's path layer with its view.</td>
+</tr>
+<tr>
+<td><strong>Draw Map</strong></td>
+<td>Draws each map over the base maps.</td>
+</tr>
+<tr>
+<td><strong>Persist Day Night Map</strong></td>
+<td>Saves each map as an HTML file.</td>
+</tr>
+<tr>
+<td><strong>Create Map Widget Single View</strong></td>
+<td>Wraps each map as a <strong>Day Night Tracks</strong> widget.</td>
+</tr>
+<tr>
+<td><strong>Merge Widget Views</strong></td>
+<td>Combines the per-group maps into one Day Night Tracks widget, so the dashboard filter switches between them.</td>
+</tr>
+<tr>
+<td><strong>Gather Dashboard</strong></td>
+<td>Collects the map widget into the dashboard.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="what-it-produces">What it produces</h2>
+<table>
+<thead>
+<tr>
+<th>Output</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>relocations.geoparquet</code></td>
+<td>The cleaned location fixes, each with an <code>is_night</code> flag.</td>
+</tr>
+<tr>
+<td><code>trajectories.geoparquet</code></td>
+<td>The track segments built from those fixes.</td>
+</tr>
+<tr>
+<td>One HTML map per group</td>
+<td>The day/night track map, as shown on the dashboard.</td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td>A <strong>Day Night Tracks</strong> map widget; with groupers set, the dashboard filter switches between groups.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li>Access to an <strong>EarthRanger</strong> data source, set up as a connection</li>
+</ul>
+<hr />
+<h2 id="1-load-the-workflow">1. Load the Workflow</h2>
+<p>In the workflow runner, add a new template using this repository's URL. Once added, select
+<strong>subject-day-night-map</strong> from the available templates list to load it.</p>
+<hr />
+<h2 id="2-configure-the-workflow">2. Configure the Workflow</h2>
+<p>You'll be prompted to fill in the following parameters before running. Fields marked <em>Advanced</em> are collapsed
+and can be left at their defaults.</p>
+<h3 id="set-workflow-details">Set Workflow Details</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Workflow Name <em>(required)</em></td>
+<td>A name for this run.</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Workflow Description</td>
+<td>Optional notes about this run.</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="set-time-range">Set Time Range</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Since <em>(required)</em></td>
+<td>The start of the period to map.</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Until <em>(required)</em></td>
+<td>The end of the period to map.</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Timezone</td>
+<td>Timezone the times are given in.</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="connect-to-earthranger">Connect to EarthRanger</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data source <em>(required)</em></td>
+<td>Select one of your configured EarthRanger data sources. Choose it first: the Subject Group drop-down lists this data source's groups.</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="set-groupers">Set Groupers</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Group by</td>
+<td>Optional. Add a grouper to get one map per group: <strong>Category</strong> (only <em>Subject Name</em>, one map per subject), <strong>Temporal</strong> (e.g. one map per month) or <strong>Spatial</strong> (one map per spatial region). Leave empty for a single map of all subjects.</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="basemap-urls">Basemap URLs</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base maps</td>
+<td>Tile layers to draw under the tracks. The first layer in the list is the bottommost. Advanced.</td>
+<td>Esri World Topo Map, with Esri World Imagery at 50% opacity</td>
+</tr>
+</tbody>
+</table>
+<h3 id="subject-group">Subject Group</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Subject Group Name <em>(required)</em></td>
+<td>The EarthRanger subject group to map, picked from a drop-down of the chosen data source's subject groups. ⚠️ A group with mixed subtypes could give unexpected results.</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="relocations-to-trajectory">Relocations To Trajectory</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Trajectory Segment Filter</td>
+<td>Limits on segment length, duration and speed; segments outside them are dropped. Advanced.</td>
+<td>length 0.001 m – 100 km, time 1 s – 48 h, speed 0.01 – 500 km/h</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-results">3. Results</h2>
+<p>The workflow writes its files to the results folder the runner gives it (<code>ECOSCOPE_WORKFLOWS_RESULTS</code>) and
+shows its dashboard when it finishes. Day segments are amber, night segments navy.</p>
+<hr />
+<h2 id="developing">Developing</h2>
+<p>The run form is set in <code>spec.yaml</code>:</p>
+<ul>
+<li><code>rjsf-overrides</code> turns <strong>Subject Group Name</strong> into a drop-down: the <code>EarthRangerEnumResolver</code> transform fills it with the subject groups of the data source picked under <strong>Connect to EarthRanger</strong> (<code>depends_on: properties.er_connection.properties.data_source.properties.name</code>).</li>
+<li><code>rjsf-overrides</code> <code>$defs</code> limits the <strong>Category</strong> grouper to <em>Subject Name</em> (<code>ValueGrouper.properties.index_name.oneOf</code>), the only subject column the maps are split on.</li>
+<li>The steps are not in task groups, so each form override is keyed by its step id (e.g. <code>subjectgroup_observations.properties.subject_group_name</code>).</li>
+<li>The <strong>Spatial</strong> grouper's <em>Spatial Regions</em> is still a text field. To make it a drop-down of the site's spatial feature groups, add an <code>EarthRangerEnumResolver</code> transform with <code>type: spatial_feature_group</code> on <code>groupers.properties.groupers</code>.</li>
+</ul>
+<pre><code class="language-bash"># recompile spec.yaml (first time: --install; after that: --update, which bumps VERSION.yaml)
+./dev/recompile.sh --update
+
+# run the test cases in test-cases.yaml
+pixi run --manifest-path pixi.toml -e default bash dev/pytest-cli.sh subject_day_night_location_map --all
+</code></pre>
+<p>Documentation: <a href="docs/index.html">docs/index.html</a>.</p>
+
+</body>
+</html>

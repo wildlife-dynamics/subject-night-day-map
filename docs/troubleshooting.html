@@ -23,7 +23,7 @@
     <h1>Troubleshooting</h1>
     <p class="lede">Common issues while configuring, running or changing subject-day-night-map, and how to resolve them.</p>
 
-    <h2>Configuration &amp; connections</h2>
+    <h2>Configuration &amp; running</h2>
 
     <div class="error-block">
       <p class="symptom">A data source connection fails or times out</p>
@@ -31,11 +31,36 @@
     </div>
 
     <div class="error-block">
+      <p class="symptom">The Subject Group Name drop-down is empty</p>
+      <p>The list comes from the data source chosen under <strong>Connect to EarthRanger</strong>, so pick that first. If it stays empty, the connection can't be reached or its account can't see any subject groups.</p>
+    </div>
+
+    <div class="error-block">
       <p class="symptom">The run returns no data</p>
-      <p>Names typed into the settings (a subject group, an event type) must match the data source exactly, including capitals. Widen the time range if it's short.</p>
+      <p>Check the <strong>Subject Group Name</strong> picked is the group you meant, and that it has location fixes in the time range. Widen the time range if it's short.</p>
+    </div>
+
+    <div class="error-block">
+      <p class="symptom">Every segment is the same colour</p>
+      <p>All fixes fell on one side of sunset, e.g. a short daytime-only time range, or a collar that only reports by day. Widen the time range to cover full days.</p>
+    </div>
+
+    <div class="error-block">
+      <p class="symptom">Tracks look broken up, or long jumps are missing</p>
+      <p>Segments outside the <strong>Trajectory Segment Filter</strong> limits are dropped. Loosen the limits under Relocations To Trajectory (advanced) for fast-moving or rarely reporting subjects.</p>
+    </div>
+
+    <div class="error-block">
+      <p class="symptom">There&#x27;s one map but I expected one per subject</p>
+      <p>Add a <strong>Category → Subject Name</strong> grouper under <strong>Set Groupers</strong>.</p>
     </div>
 
     <h2>Developing</h2>
+
+    <div class="error-block">
+      <p class="symptom">The Subject Group field is free text instead of a drop-down</p>
+      <p>Check the override key matches the step id, <code>subjectgroup_observations.properties.subject_group_name</code>, and that its <code>depends_on</code> points at <code>properties.er_connection.properties.data_source.properties.name</code>, then recompile.</p>
+    </div>
 
     <div class="error-block">
       <p class="symptom">CI says the generated files differ from the committed ones</p>
@@ -43,7 +68,7 @@
     </div>
 
     <div class="error-block">
-      <p class="symptom">CI says VERSION.yaml must be greater than main's</p>
+      <p class="symptom">CI says VERSION.yaml must be greater than main&#x27;s</p>
       <p>Every change needs a new version. <code>--update</code> bumps it: the minor number when the run form is unchanged, the major number when it changed.</p>
     </div>
 

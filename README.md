@@ -1,37 +1,49 @@
 # subject-day-night-map
 
-subject-day-night-map
+Maps the movement tracks of every subject in an EarthRanger subject group, colouring each track segment by whether it was travelled by day (amber) or by night (navy). Night is worked out from the sun's position at each location fix, so it follows the real sunset and sunrise at that place and date.
+
+Full documentation: [docs/index.html](docs/index.html) (User Guide, Technical Guide and Troubleshooting).
 
 ## What it does
 
 | Step | What it does |
 |---|---|
-| **Set Time Range** | Choose the period of time to analyze. |
-| **Connect to EarthRanger** |  |
-| **Subject Group Name** | Get observations for a subject group from EarthRanger. |
-| **Process Relocations** |  |
-| **Classify Is Night** | Classifies if segments occur at night in a trajectory dataframe |
-| **Persist Relocations** | Persist dataframe to a file or cloud storage object. |
-| **Relocations To Trajectory** |  |
-| **Persist Trajectories** | Persist dataframe to a file or cloud storage object. |
-| **Map Columns** | Maps and transforms the columns of a DataFrame based on the provided parameters. The order of the operations is as follows: drop columns, retain/reorder columns, and rename columns. |
-| **Sort Values** |  |
-| **Apply Color Map** | Adds a color column to the dataframe based on the categorical values in the specified column. |
-| **Set Groupers** |  |
-| **Split Groups** |  |
-| **Create Path Layer** | Creates a polyline layer definition based on the provided configuration. |
-| **Compute Fitted View State** | Compute a `ViewState` fitted to `geo_layers`, corrected for rendering inside a smaller-than-full-window map widget (see `_ASSUMED_VIEWPORT_WIDTH_PX`). |
-| **Set Base Maps** |  |
-| **Draw Map** | Creates a map based on the provided layer definitions and configuration. |
-| **Persist Day Night Map** | Persist text to a file or cloud storage object. |
-| **Create Map Widget Single View** | Create a map widget with a single view. |
-| **Set Workflow Details** | Add information that will help to differentiate this workflow from another. |
-| **Merge Widget Views** | Merge widgets with the same `title` and `widget_type`. |
-| **Gather Dashboard** |  |
+| **Set Workflow Details** | Name and description shown on the dashboard. |
+| **Set Time Range** | The period to map. |
+| **Connect to EarthRanger** | The EarthRanger site to read from. |
+| **Set Groupers** | How the maps are split: one map per subject, per time period or per spatial region. Leave empty for one map. |
+| **Basemap URLs** | Tile layers drawn under the tracks. |
+| **Subject Group** | Fetches the location fixes of the subject group picked from the drop-down, for the time range. |
+| **Process Relocations** | Cleans the fixes and drops known bad coordinates (0,0 / 1,1 / 180,90). |
+| **Classify Is Night** | Flags each fix as night when the sun is below the horizon at its location and time. |
+| **Persist Relocations** | Saves the classified fixes as `relocations.geoparquet`. |
+| **Relocations To Trajectory** | Joins the fixes into track segments, dropping segments outside the Trajectory Segment Filter limits. |
+| **Persist Trajectories** | Saves the track segments as `trajectories.geoparquet`. |
+| **Map Columns** | Renames the subject and day/night columns (e.g. `subject_name`, `is_night`) and drops unused patrol columns. |
+| **Sort Values** | Orders day segments before night ones, so night segments are drawn on top. |
+| **Apply Color Map** | Colours day segments amber (`#e7a553`) and night segments navy (`#292965`). |
+| **Split Groups** | One table of segments per group from Set Groupers. |
+| **Create Path Layer** | Draws each group's segments in their day/night colour, with a Day/Night legend and a tooltip. |
+| **Compute Fitted View State** | Zooms each map to its tracks. |
+| **Pair up geo_layers, view_state by group** | Pairs each group's path layer with its view. |
+| **Draw Map** | Draws each map over the base maps. |
+| **Persist Day Night Map** | Saves each map as an HTML file. |
+| **Create Map Widget Single View** | Wraps each map as a **Day Night Tracks** widget. |
+| **Merge Widget Views** | Combines the per-group maps into one Day Night Tracks widget, so the dashboard filter switches between them. |
+| **Gather Dashboard** | Collects the map widget into the dashboard. |
+
+## What it produces
+
+| Output | Description |
+|---|---|
+| `relocations.geoparquet` | The cleaned location fixes, each with an `is_night` flag. |
+| `trajectories.geoparquet` | The track segments built from those fixes. |
+| One HTML map per group | The day/night track map, as shown on the dashboard. |
+| Dashboard | A **Day Night Tracks** map widget; with groupers set, the dashboard filter switches between groups. |
 
 ## Requirements
 
-- Access to a **EarthRanger** data source, set up as a connection
+- Access to an **EarthRanger** data source, set up as a connection
 
 ---
 
@@ -44,43 +56,71 @@ In the workflow runner, add a new template using this repository's URL. Once add
 
 ## 2. Configure the Workflow
 
-You'll be prompted to fill in the following parameters before running.
-
-### Set Time Range
-
-| Field | Description | Default |
-|---|---|---|
-| Since *(required)* | The start time | — |
-| Until *(required)* | The end time | — |
-| Timezone |  | — |
-
-### Connect to EarthRanger
-
-| Field | Description | Default |
-|---|---|---|
-| Data source *(required)* | Select one of your configured data sources. | — |
-
-### Subject Group Name
-
-| Field | Description | Default |
-|---|---|---|
-| Subject Group Name *(required)* | ⚠️ The use of a group with mixed subtypes could lead to unexpected results | — |
-
-### Set Base Maps
-
-| Field | Description | Default |
-|---|---|---|
-|   | Select tile layers to use as base layers in map outputs. The first layer in the list will be the bottommost layer displayed. | `[{"url": "https://server.arcgisonline.com/ArcGIS/rest/ser…` |
+You'll be prompted to fill in the following parameters before running. Fields marked *Advanced* are collapsed
+and can be left at their defaults.
 
 ### Set Workflow Details
 
 | Field | Description | Default |
 |---|---|---|
-| Workflow Name *(required)* |  | — |
+| Workflow Name *(required)* | A name for this run. | — |
+| Workflow Description | Optional notes about this run. | — |
+
+### Set Time Range
+
+| Field | Description | Default |
+|---|---|---|
+| Since *(required)* | The start of the period to map. | — |
+| Until *(required)* | The end of the period to map. | — |
+| Timezone | Timezone the times are given in. | — |
+
+### Connect to EarthRanger
+
+| Field | Description | Default |
+|---|---|---|
+| Data source *(required)* | Select one of your configured EarthRanger data sources. Choose it first: the Subject Group drop-down lists this data source's groups. | — |
+
+### Set Groupers
+
+| Field | Description | Default |
+|---|---|---|
+| Group by | Optional. Add a grouper to get one map per group: **Category** (only *Subject Name*, one map per subject), **Temporal** (e.g. one map per month) or **Spatial** (one map per spatial region). Leave empty for a single map of all subjects. | — |
+
+### Basemap URLs
+
+| Field | Description | Default |
+|---|---|---|
+| Base maps | Tile layers to draw under the tracks. The first layer in the list is the bottommost. Advanced. | Esri World Topo Map, with Esri World Imagery at 50% opacity |
+
+### Subject Group
+
+| Field | Description | Default |
+|---|---|---|
+| Subject Group Name *(required)* | The EarthRanger subject group to map, picked from a drop-down of the chosen data source's subject groups. ⚠️ A group with mixed subtypes could give unexpected results. | — |
+
+### Relocations To Trajectory
+
+| Field | Description | Default |
+|---|---|---|
+| Trajectory Segment Filter | Limits on segment length, duration and speed; segments outside them are dropped. Advanced. | length 0.001 m – 100 km, time 1 s – 48 h, speed 0.01 – 500 km/h |
+
+---
+
+## 3. Results
+
+The workflow writes its files to the results folder the runner gives it (`ECOSCOPE_WORKFLOWS_RESULTS`) and
+shows its dashboard when it finishes. Day segments are amber, night segments navy.
 
 ---
 
 ## Developing
+
+The run form is set in `spec.yaml`:
+
+- `rjsf-overrides` turns **Subject Group Name** into a drop-down: the `EarthRangerEnumResolver` transform fills it with the subject groups of the data source picked under **Connect to EarthRanger** (`depends_on: properties.er_connection.properties.data_source.properties.name`).
+- `rjsf-overrides` `$defs` limits the **Category** grouper to *Subject Name* (`ValueGrouper.properties.index_name.oneOf`), the only subject column the maps are split on.
+- The steps are not in task groups, so each form override is keyed by its step id (e.g. `subjectgroup_observations.properties.subject_group_name`).
+- The **Spatial** grouper's *Spatial Regions* is still a text field. To make it a drop-down of the site's spatial feature groups, add an `EarthRangerEnumResolver` transform with `type: spatial_feature_group` on `groupers.properties.groupers`.
 
 ```bash
 # recompile spec.yaml (first time: --install; after that: --update, which bumps VERSION.yaml)
