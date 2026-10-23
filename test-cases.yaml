@@ -12,3 +12,7 @@ designer-run:
       subject_group_name: ecoscope
     workflow_details:
       name: sample
+    day_color:
+      var: '#e7a553'
+    night_color:
+      var: '#292965'

@@ -345,6 +345,61 @@
       "required": [],
       "type": "object",
       "title": "Relocations To Trajectory"
+    },
+    "Track Order and Colors": {
+      "type": "object",
+      "description": "Which tracks draw on top, and the colours for day and night tracks and their legend entries.",
+      "ecoscope:task_group": true,
+      "properties": {
+        "values": {
+          "additionalProperties": false,
+          "properties": {
+            "ascending": {
+              "title": "Night tracks on top",
+              "type": "boolean",
+              "default": true,
+              "description": "Draw night tracks over day tracks where they overlap. Untick to draw day tracks on top."
+            }
+          },
+          "required": [],
+          "type": "object",
+          "title": "Track Order"
+        },
+        "day_color": {
+          "additionalProperties": false,
+          "properties": {
+            "var": {
+              "title": " ",
+              "type": "string",
+              "format": "color",
+              "default": "#e7a553",
+              "description": "Colour of the tracks recorded during the day."
+            }
+          },
+          "required": [
+            "var"
+          ],
+          "type": "object",
+          "title": "Day Color"
+        },
+        "night_color": {
+          "additionalProperties": false,
+          "properties": {
+            "var": {
+              "title": " ",
+              "type": "string",
+              "format": "color",
+              "default": "#292965",
+              "description": "Colour of the tracks recorded at night."
+            }
+          },
+          "required": [
+            "var"
+          ],
+          "type": "object",
+          "title": "Night Color"
+        }
+      }
     }
   },
   "$defs": {
@@ -532,6 +587,13 @@
         "time_format"
       ]
     },
+    "Track Order and Colors": {
+      "ui:order": [
+        "values",
+        "day_color",
+        "night_color"
+      ]
+    },
     "ui:order": [
       "workflow_details",
       "time_range",
@@ -539,7 +601,8 @@
       "groupers",
       "base_maps",
       "subjectgroup_observations",
-      "to_trajectory"
+      "to_trajectory",
+      "Track Order and Colors"
     ]
   },
   "additionalProperties": false

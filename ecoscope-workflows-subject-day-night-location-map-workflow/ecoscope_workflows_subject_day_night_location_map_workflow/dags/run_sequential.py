@@ -2,6 +2,7 @@
 import os
 from typing import Any
 
+from ecoscope.platform.tasks.config import set_string_var as set_string_var
 from ecoscope.platform.tasks.config import set_workflow_details as set_workflow_details
 from ecoscope.platform.tasks.filter import set_time_range as set_time_range
 from ecoscope.platform.tasks.groupby import groupbykey as groupbykey
@@ -35,7 +36,11 @@ from ecoscope.platform.tasks.transformation import apply_color_map as apply_colo
 from ecoscope.platform.tasks.transformation import (
     classify_is_night as classify_is_night,
 )
+from ecoscope.platform.tasks.transformation import (
+    convert_column_values_to_string as convert_column_values_to_string,
+)
 from ecoscope.platform.tasks.transformation import map_columns as map_columns
+from ecoscope.platform.tasks.transformation import map_values as map_values
 from ecoscope.platform.tasks.transformation import sort_values as sort_values
 from ecoscope_workflows_ext_custom.tasks.results import (
     compute_fitted_view_state as compute_fitted_view_state,
@@ -294,7 +299,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             df=to_trajectory,
             rename_columns={
                 "extra__hex": "hex_color",
-                "extra__is_night": "is_night",
+                "extra__is_night": "day_night",
                 "extra__name": "subject_name",
                 "extra__sex": "subject_sex",
                 "extra__subject_subtype": "subject_subtype",
@@ -314,6 +319,49 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    day_night_string = (
+        task(convert_column_values_to_string)
+        .validate()
+        .set_task_instance_id("day_night_string")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=columns, columns=["day_night"], **(params.get("day_night_string") or {})
+        )
+        .call()
+    )
+
+    day_night_labels = (
+        task(map_values)
+        .validate()
+        .set_task_instance_id("day_night_labels")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=day_night_string,
+            column_name="day_night",
+            value_map={"False": "Day", "True": "Night"},
+            missing_values="preserve",
+            replacement=None,
+            **(params.get("day_night_labels") or {}),
+        )
+        .call()
+    )
+
     values = (
         task(sort_values)
         .validate()
@@ -328,12 +376,45 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=columns,
-            column_name="is_night",
-            ascending=True,
+            df=day_night_labels,
+            column_name="day_night",
             na_position="last",
             **(params.get("values") or {}),
         )
+        .call()
+    )
+
+    day_color = (
+        task(set_string_var)
+        .validate()
+        .set_task_instance_id("day_color")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("day_color") or {}))
+        .call()
+    )
+
+    night_color = (
+        task(set_string_var)
+        .validate()
+        .set_task_instance_id("night_color")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("night_color") or {}))
         .call()
     )
 
@@ -352,8 +433,8 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         )
         .partial(
             df=values,
-            input_column_name="is_night",
-            colormap=["#e7a553", "#292965"],
+            input_column_name="day_night",
+            colormap={"Day": day_color, "Night": night_color},
             output_column_name="day_night_colors",
             **(params.get("color_map") or {}),
         )
@@ -393,10 +474,9 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .partial(
             legend={
                 "title": "Day Night Tracks",
-                "values": [
-                    {"label": "Day", "color": "#e7a553"},
-                    {"label": "Night", "color": "#292965"},
-                ],
+                "label_column": "day_night",
+                "color_column": "day_night_colors",
+                "sort": "ascending",
             },
             layer_style={
                 "auto_highlight": False,
@@ -413,12 +493,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
                 "joint_rounded": True,
                 "billboard": True,
             },
-            tooltip_columns=[
-                "day_night_colors",
-                "is_night",
-                "subject_name",
-                "subject_sex",
-            ],
+            tooltip_columns=["day_night", "subject_name", "subject_sex"],
             data_url=None,
             **(params.get("path_layer") or {}),
         )

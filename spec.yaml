@@ -27,6 +27,29 @@ rjsf-overrides:
           type: subject_group_name
           depends_on: properties.er_connection.properties.data_source.properties.name
 
+    # Track Order and Colors group. Track Order: which tracks draw on top where they overlap
+    Track Order and Colors.properties.values.properties.ascending:
+      title: Night tracks on top
+      type: boolean
+      default: true
+      description: Draw night tracks over day tracks where they overlap. Untick to draw day tracks on top.
+
+    # Day/Night Color: colour pickers. These overrides only reach rjsf.json; params.json keeps
+    # set_string_var's plain required string, which is what the run is validated against.
+    # Title ' ' (not '') hides the field label; an empty string falls back to the name "var".
+    Track Order and Colors.properties.day_color.properties.var:
+      title: ' '
+      type: string
+      format: color
+      default: '#e7a553'
+      description: Colour of the tracks recorded during the day.
+    Track Order and Colors.properties.night_color.properties.var:
+      title: ' '
+      type: string
+      format: color
+      default: '#292965'
+      description: Colour of the tracks recorded at night.
+
   $defs:
     # Restrict category groupers to Subject Name
     ValueGrouper.properties.index_name.oneOf:
@@ -132,7 +155,7 @@ workflow:
     df: ${{ workflow.to_trajectory.return }}
     rename_columns:
       extra__hex: hex_color
-      extra__is_night: is_night
+      extra__is_night: day_night
       extra__name: subject_name
       extra__sex: subject_sex
       extra__subject_subtype: subject_subtype
@@ -146,24 +169,56 @@ workflow:
     raise_if_not_found: true
     duplicate_strategy: suffix
 
-- name: Sort Values
-  id: values
-  task: sort_values
+- name: Day Night To String
+  id: day_night_string
+  task: convert_column_values_to_string
   partial:
     df: ${{ workflow.columns.return }}
-    column_name: is_night
-    ascending: true
-    na_position: last
+    columns:
+    - day_night
 
+- name: Label Day Night
+  id: day_night_labels
+  task: map_values
+  partial:
+    df: ${{ workflow.day_night_string.return }}
+    column_name: day_night
+    value_map:
+      'False': Day
+      'True': Night
+    missing_values: preserve
+    replacement: null
+
+- title: Track Order and Colors
+  type: task-group
+  description: Which tracks draw on top, and the colours for day and night tracks and their legend entries.
+  tasks:
+  # Rows draw in order, so the label sorted last ends up on top: "Day" < "Night",
+  # so ascending puts night over day. `ascending` is the form's "night on top" checkbox.
+  - name: Track Order
+    id: values
+    task: sort_values
+    partial:
+      df: ${{ workflow.day_night_labels.return }}
+      column_name: day_night
+      na_position: last
+  - name: Day Color
+    id: day_color
+    task: set_string_var
+  - name: Night Color
+    id: night_color
+    task: set_string_var
+
+# A {label: colour} dict, so each label keeps its colour whatever order the rows are in.
 - name: Apply Color Map
   id: color_map
   task: apply_color_map
   partial:
     df: ${{ workflow.values.return }}
-    input_column_name: is_night
+    input_column_name: day_night
     colormap:
-    - '#e7a553'
-    - '#292965'
+      Day: ${{ workflow.day_color.return }}
+      Night: ${{ workflow.night_color.return }}
     output_column_name: day_night_colors
 
 - name: Split Groups
@@ -179,11 +234,9 @@ workflow:
   partial:
     legend:
       title: Day Night Tracks
-      values:
-      - label: Day
-        color: '#e7a553'
-      - label: Night
-        color: '#292965'
+      label_column: day_night
+      color_column: day_night_colors
+      sort: ascending
     layer_style:
       auto_highlight: false
       opacity: 0.65
@@ -199,8 +252,7 @@ workflow:
       joint_rounded: true
       billboard: true
     tooltip_columns:
-    - day_night_colors
-    - is_night
+    - day_night
     - subject_name
     - subject_sex
     data_url: null
@@ -280,4 +332,3 @@ workflow:
     widgets: ${{ workflow.widget_views.return }}
     groupers: ${{ workflow.groupers.return }}
     time_range: ${{ workflow.time_range.return }}
-

@@ -336,6 +336,48 @@
       "required": [],
       "type": "object",
       "title": "Relocations To Trajectory"
+    },
+    "values": {
+      "additionalProperties": false,
+      "properties": {
+        "ascending": {
+          "default": true,
+          "title": "Ascending",
+          "type": "boolean",
+          "description": "Sort ascending if true"
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": "Track Order"
+    },
+    "day_color": {
+      "additionalProperties": false,
+      "properties": {
+        "var": {
+          "title": "",
+          "type": "string"
+        }
+      },
+      "required": [
+        "var"
+      ],
+      "type": "object",
+      "title": "Day Color"
+    },
+    "night_color": {
+      "additionalProperties": false,
+      "properties": {
+        "var": {
+          "title": "",
+          "type": "string"
+        }
+      },
+      "required": [
+        "var"
+      ],
+      "type": "object",
+      "title": "Night Color"
     }
   },
   "$defs": {
@@ -524,7 +566,10 @@
       "groupers",
       "base_maps",
       "subjectgroup_observations",
-      "to_trajectory"
+      "to_trajectory",
+      "values",
+      "day_color",
+      "night_color"
     ]
   },
   "additionalProperties": false
