@@ -310,6 +310,9 @@ workflow:
 - name: Create Map Widget Single View
   id: map_widget_single_view
   task: create_map_widget_single_view
+  skipif:
+    conditions:
+      - never
   partial:
     title: Day Night Tracks
   map:
