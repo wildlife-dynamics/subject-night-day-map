@@ -592,7 +592,21 @@
         "values",
         "day_color",
         "night_color"
-      ]
+      ],
+      "day_color": {
+        "var": {
+          "ui:style": {
+            "maxWidth": "120px"
+          }
+        }
+      },
+      "night_color": {
+        "var": {
+          "ui:style": {
+            "maxWidth": "120px"
+          }
+        }
+      }
     },
     "ui:order": [
       "workflow_details",

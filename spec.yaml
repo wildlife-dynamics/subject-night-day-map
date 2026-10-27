@@ -5,7 +5,7 @@ requirements:
   channel: https://repo.prefix.dev/ecoscope-workflows/
 
 - name: ecoscope-workflows-ext-custom
-  version: ==0.1.3
+  version: ==0.1.4
   channel: https://repo.prefix.dev/ecoscope-workflows-custom/
 
 - name: pydeck
@@ -55,6 +55,14 @@ rjsf-overrides:
     ValueGrouper.properties.index_name.oneOf:
       - const: subject_name
         title: Subject Name
+
+  uiSchema:
+    # Keep the day/night colour pickers swatch-sized instead of stretching across the form.
+    # The form applies ui:style to the field's wrapper.
+    Track Order and Colors.day_color.var.ui:style:
+      maxWidth: 120px
+    Track Order and Colors.night_color.var.ui:style:
+      maxWidth: 120px
 
 task-instance-defaults:
   skipif:
