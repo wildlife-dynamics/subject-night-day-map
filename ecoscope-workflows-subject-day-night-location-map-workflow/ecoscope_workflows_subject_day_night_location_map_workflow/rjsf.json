@@ -18,7 +18,22 @@
       ],
       "type": "object",
       "description": "Add information that will help to differentiate this workflow from another.",
-      "title": "Set Workflow Details"
+      "title": "Workflow Details"
+    },
+    "er_connection": {
+      "additionalProperties": false,
+      "properties": {
+        "data_source": {
+          "$ref": "#/$defs/EarthRangerConnection",
+          "title": "",
+          "description": "Select one of your configured data sources."
+        }
+      },
+      "required": [
+        "data_source"
+      ],
+      "type": "object",
+      "title": "Data Source"
     },
     "time_range": {
       "additionalProperties": false,
@@ -43,13 +58,6 @@
           ],
           "default": null,
           "title": "Timezone"
-        },
-        "time_format": {
-          "default": "%d %b %Y %H:%M:%S",
-          "title": "Time Format",
-          "type": "string",
-          "description": "The time format",
-          "ecoscope:advanced": true
         }
       },
       "required": [
@@ -58,22 +66,31 @@
       ],
       "type": "object",
       "description": "Choose the period of time to analyze.",
-      "title": "Set Time Range"
+      "title": "Time Range"
     },
-    "er_connection": {
+    "subjectgroup_observations": {
       "additionalProperties": false,
       "properties": {
-        "data_source": {
-          "$ref": "#/$defs/EarthRangerConnection",
-          "title": "",
-          "description": "Select one of your configured data sources."
+        "subject_group_name": {
+          "title": "Subject Group Name",
+          "type": "string",
+          "description": "The EarthRanger subject group to map, picked from the chosen data source's subject groups. \u26a0\ufe0f The use of a group with mixed subtypes could lead to unexpected results.",
+          "ecoscope:transform": [
+            {
+              "transformer": "EarthRangerEnumResolver",
+              "transformer_kws": {
+                "type": "subject_group_name",
+                "depends_on": "properties.er_connection.properties.data_source.properties.name"
+              }
+            }
+          ]
         }
       },
       "required": [
-        "data_source"
+        "subject_group_name"
       ],
       "type": "object",
-      "title": "Connect to EarthRanger"
+      "title": "Subject Group"
     },
     "groupers": {
       "additionalProperties": false,
@@ -84,24 +101,18 @@
             "anyOf": [
               {
                 "$ref": "#/$defs/ValueGrouper"
-              },
-              {
-                "$ref": "#/$defs/TemporalGrouper"
-              },
-              {
-                "$ref": "#/$defs/SpatialGrouper"
               }
             ],
             "title": "Group by"
           },
           "title": " ",
           "type": "array",
-          "description": "            Specify how the data should be grouped to create the views for your dashboard.\n            This field is optional; if left blank, all the data will appear in a single view.\n            "
+          "description": "Specify how the data should be grouped to create the views for your dashboard. This field is optional; if left blank, all the data will appear in a single view."
         }
       },
       "type": "object",
       "required": [],
-      "title": "Set Groupers"
+      "title": "Group Data"
     },
     "base_maps": {
       "additionalProperties": false,
@@ -294,31 +305,7 @@
       },
       "type": "object",
       "required": [],
-      "title": "Basemap URLs"
-    },
-    "subjectgroup_observations": {
-      "additionalProperties": false,
-      "properties": {
-        "subject_group_name": {
-          "title": "Subject Group Name",
-          "type": "string",
-          "description": "The EarthRanger subject group to map, picked from the chosen data source's subject groups. \u26a0\ufe0f The use of a group with mixed subtypes could lead to unexpected results.",
-          "ecoscope:transform": [
-            {
-              "transformer": "EarthRangerEnumResolver",
-              "transformer_kws": {
-                "type": "subject_group_name",
-                "depends_on": "properties.er_connection.properties.data_source.properties.name"
-              }
-            }
-          ]
-        }
-      },
-      "required": [
-        "subject_group_name"
-      ],
-      "type": "object",
-      "title": "Subject Group"
+      "title": "Map Base Layers"
     },
     "to_trajectory": {
       "additionalProperties": false,
@@ -344,27 +331,13 @@
       },
       "required": [],
       "type": "object",
-      "title": "Relocations To Trajectory"
+      "title": "Trajectory Segment Filter"
     },
-    "Track Order and Colors": {
+    "Track Colors": {
       "type": "object",
-      "description": "Which tracks draw on top, and the colours for day and night tracks and their legend entries.",
+      "description": "The colours for day and night tracks and their legend entries.",
       "ecoscope:task_group": true,
       "properties": {
-        "values": {
-          "additionalProperties": false,
-          "properties": {
-            "ascending": {
-              "title": "Night tracks on top",
-              "type": "boolean",
-              "default": true,
-              "description": "Draw night tracks over day tracks where they overlap. Untick to draw day tracks on top."
-            }
-          },
-          "required": [],
-          "type": "object",
-          "title": "Track Order"
-        },
         "day_color": {
           "additionalProperties": false,
           "properties": {
@@ -403,6 +376,19 @@
     }
   },
   "$defs": {
+    "EarthRangerConnection": {
+      "properties": {
+        "name": {
+          "title": "Data Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "EarthRangerConnection",
+      "type": "object"
+    },
     "TimezoneInfo": {
       "properties": {
         "label": {
@@ -429,19 +415,6 @@
         "utc"
       ],
       "title": "TimezoneInfo",
-      "type": "object"
-    },
-    "EarthRangerConnection": {
-      "properties": {
-        "name": {
-          "title": "Data Source",
-          "type": "string"
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "title": "EarthRangerConnection",
       "type": "object"
     },
     "SpatialGrouper": {
@@ -583,13 +556,11 @@
       "ui:order": [
         "since",
         "until",
-        "timezone",
-        "time_format"
+        "timezone"
       ]
     },
-    "Track Order and Colors": {
+    "Track Colors": {
       "ui:order": [
-        "values",
         "day_color",
         "night_color"
       ],
@@ -610,13 +581,13 @@
     },
     "ui:order": [
       "workflow_details",
-      "time_range",
       "er_connection",
+      "time_range",
+      "subjectgroup_observations",
       "groupers",
       "base_maps",
-      "subjectgroup_observations",
       "to_trajectory",
-      "Track Order and Colors"
+      "Track Colors"
     ]
   },
   "additionalProperties": false

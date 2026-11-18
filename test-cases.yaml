@@ -16,3 +16,25 @@ designer-run:
       var: '#e7a553'
     night_color:
       var: '#292965'
+
+sample-er:
+  name: Sample EarthRanger
+  description: >-
+    Live run against the local Sample EarthRanger (Africa scenario): the Kruger Collars group
+    (elephant, buffalo, leopard) for June 2025.
+  mock_io: false
+  params:
+    time_range:
+      since: '2025-06-01T00:00:00'
+      until: '2025-06-30T23:59:59'
+    er_connection:
+      data_source:
+        name: Sample EarthRanger
+    subjectgroup_observations:
+      subject_group_name: Kruger Collars
+    workflow_details:
+      name: Day and night tracks, Kruger
+    day_color:
+      var: '#e7a553'
+    night_color:
+      var: '#292965'

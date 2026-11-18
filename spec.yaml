@@ -1,4 +1,44 @@
 id: subject_day_night_location_map
+metadata:
+  name: Subject Day Night Map
+  description: >-
+    Maps the movement tracks of every subject in an EarthRanger subject group, colouring each
+    track segment by whether it was travelled by day or by night. Night is worked out from the
+    sun's position at each location fix, so it follows the real sunset and sunrise at that place
+    and date. One map for the whole group, or one per subject, time period or region.
+  maintainers:
+    - name: Tevin Temu
+      email: tevin@wildlifedynamics.com
+      role: owner
+  outputs:
+    - name: Day Night Dashboard
+      type: dashboard
+      description: >-
+        The day/night track map, one view per group when groupers are set, with the workflow
+        name and time range.
+      indicators:
+        - name: Day and night movement
+    - name: Day Night Tracks Map
+      type: map
+      description: >-
+        Each subject's track drawn segment by segment in the day colour (amber by default) or
+        the night colour (navy by default), with day tracks drawn over night tracks.
+      indicators:
+        - name: Day and night movement
+    - name: Relocations and Trajectories
+      type: file
+      description: >-
+        The cleaned relocations with their day/night classification and the trajectory
+        segments (GeoParquet).
+      indicators:
+        - name: Day and night movement
+  license: BSD-3-Clause
+  repository: https://github.com/wildlife-dynamics/subject-night-day-map
+  documentation: https://github.com/wildlife-dynamics/subject-night-day-map#readme
+  readme: README.md
+  keywords: [movement, day-night, nocturnal, tracks, trajectories, sun-position, earthranger]
+  thumbnail: resources/thumbnail.png
+
 requirements:
 - name: ecoscope-platform
   version: ==2.25.3
@@ -27,28 +67,28 @@ rjsf-overrides:
           type: subject_group_name
           depends_on: properties.er_connection.properties.data_source.properties.name
 
-    # Track Order and Colors group. Track Order: which tracks draw on top where they overlap
-    Track Order and Colors.properties.values.properties.ascending:
-      title: Night tracks on top
-      type: boolean
-      default: true
-      description: Draw night tracks over day tracks where they overlap. Untick to draw day tracks on top.
-
-    # Day/Night Color: colour pickers. These overrides only reach rjsf.json; params.json keeps
-    # set_string_var's plain required string, which is what the run is validated against.
-    # Title ' ' (not '') hides the field label; an empty string falls back to the name "var".
-    Track Order and Colors.properties.day_color.properties.var:
+    # Track Colors group. Day/Night Color: colour pickers. These overrides only reach rjsf.json;
+    # params.json keeps set_string_var's plain required string, which is what the run is validated
+    # against. Title ' ' (not '') hides the field label; an empty string falls back to the name "var".
+    Track Colors.properties.day_color.properties.var:
       title: ' '
       type: string
       format: color
       default: '#e7a553'
       description: Colour of the tracks recorded during the day.
-    Track Order and Colors.properties.night_color.properties.var:
+    Track Colors.properties.night_color.properties.var:
       title: ' '
       type: string
       format: color
       default: '#292965'
       description: Colour of the tracks recorded at night.
+
+    # Group Data: All (leave the list empty) or Category (Subject Name, via the ValueGrouper $defs
+    # override below) only; the Time and Spatial grouper options are removed.
+    groupers.properties.groupers.description: >-
+      Specify how the data should be grouped to create the views for your dashboard. This field is optional; if left blank, all the data will appear in a single view.
+    groupers.properties.groupers.items.anyOf:
+    - $ref: '#/$defs/ValueGrouper'
 
   $defs:
     # Restrict category groupers to Subject Name
@@ -59,9 +99,9 @@ rjsf-overrides:
   uiSchema:
     # Keep the day/night colour pickers swatch-sized instead of stretching across the form.
     # The form applies ui:style to the field's wrapper.
-    Track Order and Colors.day_color.var.ui:style:
+    Track Colors.day_color.var.ui:style:
       maxWidth: 120px
-    Track Order and Colors.night_color.var.ui:style:
+    Track Colors.night_color.var.ui:style:
       maxWidth: 120px
 
 task-instance-defaults:
@@ -71,25 +111,19 @@ task-instance-defaults:
     - any_dependency_skipped
 
 workflow:
-- name: Set Workflow Details
+- name: Workflow Details
   id: workflow_details
   task: set_workflow_details
 
-- name: Set Time Range
-  id: time_range
-  task: set_time_range
-
-- name: Connect to EarthRanger
+- name: Data Source
   id: er_connection
   task: set_er_connection
 
-- name: Set Groupers
-  id: groupers
-  task: set_groupers
-
-- name: Basemap URLs
-  id: base_maps
-  task: set_base_maps
+- name: Time Range
+  id: time_range
+  task: set_time_range
+  partial: 
+    time_format: '%d %b %Y %H:%M:%S'
 
 - name: Subject Group
   id: subjectgroup_observations
@@ -102,6 +136,14 @@ workflow:
     include_subjectsource_details: false
     filter: clean
     include_subject_additional: false
+
+- name: Group Data
+  id: groupers
+  task: set_groupers
+
+- name: Map Base Layers
+  id: base_maps
+  task: set_base_maps
 
 - name: Process Relocations
   id: relocations
@@ -141,7 +183,7 @@ workflow:
     filename: relocations
     filetype: geoparquet
 
-- name: Relocations To Trajectory
+- name: Trajectory Segment Filter
   id: to_trajectory
   task: relocations_to_trajectory
   partial:
@@ -197,19 +239,21 @@ workflow:
     missing_values: preserve
     replacement: null
 
-- title: Track Order and Colors
+# Rows draw in order, so the label sorted last ends up on top: "Day" > "Night" when sorted
+# descending, so day tracks are always drawn over night tracks. Not on the form.
+- name: Track Order
+  id: values
+  task: sort_values
+  partial:
+    df: ${{ workflow.day_night_labels.return }}
+    column_name: day_night
+    ascending: false
+    na_position: last
+
+- title: Track Colors
   type: task-group
-  description: Which tracks draw on top, and the colours for day and night tracks and their legend entries.
+  description: The colours for day and night tracks and their legend entries.
   tasks:
-  # Rows draw in order, so the label sorted last ends up on top: "Day" < "Night",
-  # so ascending puts night over day. `ascending` is the form's "night on top" checkbox.
-  - name: Track Order
-    id: values
-    task: sort_values
-    partial:
-      df: ${{ workflow.day_night_labels.return }}
-      column_name: day_night
-      na_position: last
   - name: Day Color
     id: day_color
     task: set_string_var

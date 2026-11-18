@@ -20,7 +20,7 @@ Full documentation: [docs/index.html](docs/index.html) (User Guide, Technical Gu
 | **Relocations To Trajectory** | Joins the fixes into track segments, dropping segments outside the Trajectory Segment Filter limits. |
 | **Persist Trajectories** | Saves the track segments as `trajectories.geoparquet`. |
 | **Map Columns** | Renames the subject and day/night columns (e.g. `subject_name`, `is_night`) and drops unused patrol columns. |
-| **Sort Values** | Orders day segments before night ones, so night segments are drawn on top. |
+| **Sort Values** | Orders night segments before day ones, so day segments are drawn on top. |
 | **Apply Color Map** | Colours day segments amber (`#e7a553`) and night segments navy (`#292965`). |
 | **Split Groups** | One table of segments per group from Set Groupers. |
 | **Create Path Layer** | Draws each group's segments in their day/night colour, with a Day/Night legend and a tooltip. |

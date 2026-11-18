@@ -18,7 +18,22 @@
       ],
       "type": "object",
       "description": "Add information that will help to differentiate this workflow from another.",
-      "title": "Set Workflow Details"
+      "title": "Workflow Details"
+    },
+    "er_connection": {
+      "additionalProperties": false,
+      "properties": {
+        "data_source": {
+          "$ref": "#/$defs/EarthRangerConnection",
+          "title": "",
+          "description": "Select one of your configured data sources."
+        }
+      },
+      "required": [
+        "data_source"
+      ],
+      "type": "object",
+      "title": "Data Source"
     },
     "time_range": {
       "additionalProperties": false,
@@ -43,13 +58,6 @@
           ],
           "default": null,
           "title": "Timezone"
-        },
-        "time_format": {
-          "default": "%d %b %Y %H:%M:%S",
-          "title": "Time Format",
-          "type": "string",
-          "description": "The time format",
-          "ecoscope:advanced": true
         }
       },
       "required": [
@@ -58,22 +66,22 @@
       ],
       "type": "object",
       "description": "Choose the period of time to analyze.",
-      "title": "Set Time Range"
+      "title": "Time Range"
     },
-    "er_connection": {
+    "subjectgroup_observations": {
       "additionalProperties": false,
       "properties": {
-        "data_source": {
-          "$ref": "#/$defs/EarthRangerConnection",
-          "title": "",
-          "description": "Select one of your configured data sources."
+        "subject_group_name": {
+          "title": "Subject Group Name",
+          "type": "string",
+          "description": "\u26a0\ufe0f The use of a group with mixed subtypes could lead to unexpected results"
         }
       },
       "required": [
-        "data_source"
+        "subject_group_name"
       ],
       "type": "object",
-      "title": "Connect to EarthRanger"
+      "title": "Subject Group"
     },
     "groupers": {
       "additionalProperties": false,
@@ -101,7 +109,7 @@
       },
       "type": "object",
       "required": [],
-      "title": "Set Groupers"
+      "title": "Group Data"
     },
     "base_maps": {
       "additionalProperties": false,
@@ -294,22 +302,7 @@
       },
       "type": "object",
       "required": [],
-      "title": "Basemap URLs"
-    },
-    "subjectgroup_observations": {
-      "additionalProperties": false,
-      "properties": {
-        "subject_group_name": {
-          "title": "Subject Group Name",
-          "type": "string",
-          "description": "\u26a0\ufe0f The use of a group with mixed subtypes could lead to unexpected results"
-        }
-      },
-      "required": [
-        "subject_group_name"
-      ],
-      "type": "object",
-      "title": "Subject Group"
+      "title": "Map Base Layers"
     },
     "to_trajectory": {
       "additionalProperties": false,
@@ -335,21 +328,7 @@
       },
       "required": [],
       "type": "object",
-      "title": "Relocations To Trajectory"
-    },
-    "values": {
-      "additionalProperties": false,
-      "properties": {
-        "ascending": {
-          "default": true,
-          "title": "Ascending",
-          "type": "boolean",
-          "description": "Sort ascending if true"
-        }
-      },
-      "required": [],
-      "type": "object",
-      "title": "Track Order"
+      "title": "Trajectory Segment Filter"
     },
     "day_color": {
       "additionalProperties": false,
@@ -381,6 +360,19 @@
     }
   },
   "$defs": {
+    "EarthRangerConnection": {
+      "properties": {
+        "name": {
+          "title": "Data Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "EarthRangerConnection",
+      "type": "object"
+    },
     "TimezoneInfo": {
       "properties": {
         "label": {
@@ -407,19 +399,6 @@
         "utc"
       ],
       "title": "TimezoneInfo",
-      "type": "object"
-    },
-    "EarthRangerConnection": {
-      "properties": {
-        "name": {
-          "title": "Data Source",
-          "type": "string"
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "title": "EarthRangerConnection",
       "type": "object"
     },
     "SpatialGrouper": {
@@ -555,19 +534,17 @@
       "ui:order": [
         "since",
         "until",
-        "timezone",
-        "time_format"
+        "timezone"
       ]
     },
     "ui:order": [
       "workflow_details",
-      "time_range",
       "er_connection",
+      "time_range",
+      "subjectgroup_observations",
       "groupers",
       "base_maps",
-      "subjectgroup_observations",
       "to_trajectory",
-      "values",
       "day_color",
       "night_color"
     ]

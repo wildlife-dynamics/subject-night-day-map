@@ -73,23 +73,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    time_range = (
-        task(set_time_range)
-        .validate()
-        .set_task_instance_id("time_range")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(**(params.get("time_range") or {}))
-        .call()
-    )
-
     er_connection = (
         task(set_er_connection)
         .validate()
@@ -104,6 +87,49 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(**(params.get("er_connection") or {}))
+        .call()
+    )
+
+    time_range = (
+        task(set_time_range)
+        .validate()
+        .set_task_instance_id("time_range")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(time_format="%d %b %Y %H:%M:%S", **(params.get("time_range") or {}))
+        .call()
+    )
+
+    subjectgroup_observations = (
+        task(get_subjectgroup_observations)
+        .validate()
+        .set_task_instance_id("subjectgroup_observations")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            time_range=time_range,
+            client=er_connection,
+            raise_on_empty=True,
+            include_details=False,
+            include_subjectsource_details=False,
+            filter="clean",
+            include_subject_additional=False,
+            **(params.get("subjectgroup_observations") or {}),
+        )
         .call()
     )
 
@@ -138,32 +164,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(**(params.get("base_maps") or {}))
-        .call()
-    )
-
-    subjectgroup_observations = (
-        task(get_subjectgroup_observations)
-        .validate()
-        .set_task_instance_id("subjectgroup_observations")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            time_range=time_range,
-            client=er_connection,
-            raise_on_empty=True,
-            include_details=False,
-            include_subjectsource_details=False,
-            filter="clean",
-            include_subject_additional=False,
-            **(params.get("subjectgroup_observations") or {}),
-        )
         .call()
     )
 
@@ -379,6 +379,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .partial(
             df=day_night_labels,
             column_name="day_night",
+            ascending=False,
             na_position="last",
             **(params.get("values") or {}),
         )
